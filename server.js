@@ -35,6 +35,10 @@ io.sockets.on("connection", (socket) => {
         if (index !== -1) {
             // User found!
 
+            // In case a user starts typing and within the three-second interval
+            // disconnects from the page, we need to remove the 'x is typing...'
+            socket.broadcast.emit("stoppedTyping", { username: users[index].username });
+
             // Removing user who disconnected from our database.
             users.splice(index, 1);
 

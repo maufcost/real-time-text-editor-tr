@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+            <title>Real-Time Text Editor</title>
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+        <style>
+            body {
+                padding: 0;
+                font-family: 'Roboto', sans-serif;
+                background-color: #fff;
+                text-align: center;
+            }
+
+            ul, li {
+                margin: 0;
+                padding: 0;
+            }
+
+            h1 {
+                margin-bottom: 0;
+            }
+
+            p {
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            small {
+                display: block;
+                margin: 10px 0;
+                color: #696969;
+            }
+
+            input {
+                border-radius: 5px;
+                padding: 8px 40px 8px 10px;
+                border-style: none;
+                border: 1px solid black;
+            }
+
+            textarea {
+                border: 1px solid #333333;
+                /* display: none; */
+                padding: 20px;
+                resize: none;
+                border-radius: 5px;
+                margin-top: 10px;
+            }
+
+            button {
+                background-color: #333333;
+                color: #fff;
+                border-radius: 5px;
+                border: none;
+                padding: 10px 40px;
+            }
+
+            button:hover {
+                background-color: black;
+                color: #fff;
+                cursor: pointer;
+            }
+
+            #online-users {
+                color: #fff;
+                background-color: #333333;
+                display: none;
+                padding: 20px;
+                margin-top: 20px;
+                border-radius: 5px;
+            }
+
+            #online-users ul {
+                list-style: none;
+            }
+
+            #online-users li {
+                border-radius: 5px;
+                border: 2px solid #149157;
+                background-color: #21bf73;
+                padding: 5px 40px;
+                margin-bottom: 5px;
+                color: black;
+            }
+
+            #online-users h4 {
+                margin: 0;
+            }
+
+            #users-typing {
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <h1>Real-Time Text Editor</h1>
+        <p>It updates texts in real-time as users type in, shows online users,
+           and users who are currently typing.</p>
+        <small>Powered by web sockets. <a>See tutorial on how to create this page here.</a></small>
+
+        <!-- Username input -->
+        <form action="#">
+            <label for="username"></label>
+            <input type="text" id="username" placeholder="Enter your username">
+            <button type="submit">Enter</button>
+        </form>
+
+        <!-- Online users -->
+        <div id="online-users">
+            <h4>Online Users:</h4>
+            <ul></ul>
+        </div>
+
+        <!-- Users typing section -->
+        <div id="users-typing">
+            <ul></ul>
+        </div>
+
+        <!-- Mini Google Docs part -->
+        <textarea disabled rows="20" cols="50" aria-live="polite"></textarea>
+
+        <!-- Socket.io CDN -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+
+        <!-- Custom JS -->
+        <script>
+            // Socket setup.
+            const socket = io.connect("http://localhost:3000");
+            const form = document.querySelector("form");
+            const input = document.getElementById("username");
+            const textarea = document.querySelector("textarea");
+            const usersTypingDiv = document.getElementById("users-typing");
+            const onlineUsersDiv = document.getElementById("online-users");
+            let username;
+            let typingNameRemoved = true;
+
+            // Event to listen when the the form is submitted.
+            form.addEventListener("submit", (event) => {
+                event.preventDefault();
+
+                // Checking if the input is not empty. If it is not empty:
+                // 1. Show the textarea.
+                // 2. Get the user's typed username.
+                // 3. Make the form disappear.
+                // 4. Showing the list of online users.
+                // 5. Emitting a socket event so that all clients know that a new
+                //    user has joined the page.
+                if (input.value !== "") {
+                    // textarea.style.display = "block";
+                    textarea.disabled = false;
+                    username = input.value;
+                    form.style.display = "none";
+                    onlineUsersDiv.style.display = "inline-block";
+                    socket.emit("joinRoom", { username });
+                }
+            });
+
+            // Adding event listener to textarea to detect change on the textarea
+            // element and emitting a socket event for such change.
+            textarea.addEventListener("change", (event) => {
+                const data = {
+                    content: textarea.value,
+                    username
+                };
+
+                // We need this chat so that if the user starts typing and within
+                // 3 seconds, one starts typing again, we do not add another
+                // repeat "x is typing..." <li> to the list.
+                if (typingNameRemoved) {
+                    socket.emit("textareaChanged", data);
+                    typingNameRemoved = false;
+                }
+            });
+
+            // Socket event listening for change somewhere.
+            socket.on("textareaChanged", (data) => {
+                textarea.value = data.content;
+                usersTypingDiv.innerHTML += `<li><b>${data.username}</b> is typing...</li>`;
+            });
+
+            // Socket event listening for when the user stops typing after 3 seconds.
+            let timer;
+            const stoppedTypingTime = 3000; // 3000ms = 3s.
+
+            // Starting the timer as soon as the user stops typing.
+            textarea.addEventListener("keyup", (event) => {
+                clearTimeout(timer); // Just in case.
+                timer = setTimeout(emitStoppedTypingEvent, stoppedTypingTime);
+            });
+
+            // The user is typing...
+            textarea.addEventListener("keydown", (event) => {
+                clearTimeout(timer);
+            });
+
+            function emitStoppedTypingEvent() {
+                socket.emit("stoppedTyping", { username });
+                typingNameRemoved = true;
+            }
+
+            // Listening for when one of the live users has stopped typing.
+            // If a user has topped typing, then:
+            // 1. Remove the user from the list of typing users.
+            socket.on("stoppedTyping", ({ username }) => {
+                const lis = usersTypingDiv.querySelectorAll("li");
+                lis.forEach((li) => {
+                    if(li.querySelector("b").innerHTML === username) {
+                        li.remove();
+                    }
+                });
+            });
+
+            // Getting list of users currently in the room.
+            socket.on("showOnlineUsers", ({ users }) => {
+                const list = onlineUsersDiv.querySelector("ul");
+
+                // Emptying the list so that we don't add users multiple times.
+                list.innerHTML = "";
+
+                // Adding users in the room to the list of online users.
+                for(let i = 0; i < users.length; i++) {
+                    list.innerHTML += `<li>${users[i].username} is online</li>`;
+                }
+            });
+        </script>
+    </body>
+</html>

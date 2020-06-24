@@ -1,7 +1,7 @@
 const path = require("path");
 const express = require("express");
 const app = express();
-const server = app.listen(3000);
+const server = app.listen(process.env.PORT || 3000);
 const io = require("socket.io").listen(server);
 
 // Serving static files on the public folder.

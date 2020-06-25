@@ -2,14 +2,15 @@
 <html lang="en" dir="ltr">
     <head>
         <meta charset="utf-8">
-            <title>Real-Time Text Editor</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Real-Time Text Editor</title>
         <!-- Google Fonts -->
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
         <link rel="shortcut icon" type="image/png" href="favicon.png">
         <style>
             body {
                 padding: 0;
-                font-family: 'Roboto', sans-serif;
+                font-family: 'Bebas Neue', cursive;
                 background-color: #fff;
                 text-align: center;
             }
@@ -21,6 +22,7 @@
 
             h1 {
                 margin-bottom: 0;
+                display: inline-block;
             }
 
             p {
@@ -56,6 +58,7 @@
                 border-radius: 5px;
                 border: none;
                 padding: 10px 40px;
+                font-family: 'Bebas Neue', cursive;
             }
 
             button:hover {
@@ -93,10 +96,25 @@
             #users-typing {
                 margin-top: 10px;
             }
+
+            #green-icon {
+                opacity: 1;
+                transition: opacity 0.3s ease-in-out;
+                display: inline-block;
+                min-height: 20px;
+                min-width: 20px;
+                background-color: green;
+                border-radius: 50%;
+                margin-right: 10px;
+            }
+
+            #green-icon.fade {
+                opacity: 0;
+            }
         </style>
     </head>
     <body>
-
+        <span id="green-icon"></span>
         <h1>Real-Time Text Editor</h1>
         <p>It updates texts in real-time as users type in, shows online users,
            and users who are currently typing.</p>
@@ -226,6 +244,12 @@
                     list.innerHTML += `<li>${users[i].username} is online</li>`;
                 }
             });
+
+            // Green icon animation.
+            const greenIcon = document.getElementById("green-icon");
+            window.setInterval(function() {
+                greenIcon.classList.toggle("fade");
+            }, 1000);
         </script>
     </body>
 </html>

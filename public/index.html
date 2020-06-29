@@ -255,8 +255,6 @@
             // Showing what is already written on the textarea (if anything)
             // to a user who just joined the page.
             socket.on("initialTextAreaContent", ({ userJustJoined, content }) => {
-                console.log(userJustJoined);
-                console.log(username);
                 if (userJustJoined === username) {
                     textarea.value = content;
                 }

@@ -22,11 +22,11 @@ io.sockets.on("connection", (socket) => {
         // Sending socket event to update list of online users on all the clients.
         io.emit("showOnlineUsers", { users });
 
-        // I did not really wanted to implement routes and template engines, so
+        // I did not really want to implement routes and template engines, so
         // this is the way I thought would be best to show what is already written
         // on the textarea element for user who JUST joined the page.
         io.emit("initialTextAreaContent", { userJustJoined: username,
-                                            content: currentTextContent })
+                                            content: currentTextContent });
     });
 
     socket.on("textareaChanged", (data) => {

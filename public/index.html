@@ -147,7 +147,8 @@
         <!-- Custom JS -->
         <script>
             // Socket setup.
-            const socket = io.connect("https://real-time-text-editor.herokuapp.com/");
+            const socket = io.connect("http://localhost:3000");
+            // const socket = io.connect("https://real-time-text-editor.herokuapp.com/");
             const form = document.querySelector("form");
             const input = document.getElementById("username");
             const textarea = document.querySelector("textarea");
@@ -250,6 +251,16 @@
             window.setInterval(function() {
                 greenIcon.classList.toggle("fade");
             }, 1000);
+
+            // Showing what is already written on the textarea (if anything)
+            // to a user who just joined the page.
+            socket.on("initialTextAreaContent", ({ userJustJoined, content }) => {
+                console.log(userJustJoined);
+                console.log(username);
+                if (userJustJoined === username) {
+                    textarea.value = content;
+                }
+            });
         </script>
     </body>
 </html>

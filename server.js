@@ -9,6 +9,7 @@ app.use(express.static(path.join("public")));
 
 // This is our super advanced database to keep things simple;
 let users = [];
+let currentTextContent = "";
 
 // Socket events.
 io.sockets.on("connection", (socket) => {
@@ -20,9 +21,16 @@ io.sockets.on("connection", (socket) => {
 
         // Sending socket event to update list of online users on all the clients.
         io.emit("showOnlineUsers", { users });
+
+        // I did not really wanted to implement routes and template engines, so
+        // this is the way I thought would be best to show what is already written
+        // on the textarea element for user who JUST joined the page.
+        io.emit("initialTextAreaContent", { userJustJoined: username,
+                                            content: currentTextContent })
     });
 
     socket.on("textareaChanged", (data) => {
+        currentTextContent = data.content;
         socket.broadcast.emit("textareaChanged", data);
     });
 
